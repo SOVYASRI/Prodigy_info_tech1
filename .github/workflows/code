@@ -1,0 +1,50 @@
+import pandas as pd
+train = pd.read_csv('train.csv')
+test = pd.read_csv('test.csv')
+gender_submission = pd.read_csv('gender_submission.csv')
+
+train['Age'].fillna(train['Age'].median(), inplace=True)
+test['Age'].fillna(test['Age'].median(), inplace=True)
+test['Fare'].fillna(test['Fare'].median(), inplace=True)
+
+train.drop(columns=['Cabin', 'Embarked'], inplace=True)
+test.drop(columns=['Cabin', 'Embarked'], inplace=True)
+
+train = pd.get_dummies(train, columns=['Sex'], drop_first=True)
+test = pd.get_dummies(test, columns=['Sex'], drop_first=True)
+
+#Survival Rate Distribution
+import seaborn as sns
+import matplotlib.pyplot as plt
+sns.countplot(x='Survived', data=train)
+plt.title('Survival Distribution')
+plt.show()
+
+# Barplot of survival rate by gender
+sns.barplot(x='Survived', y='Sex_male', data=train)
+plt.title('Survival Rate by Gender (Train Data)')
+plt.show()
+
+# Boxplot of survival by age
+plt.figure(figsize=(10, 6))
+sns.boxplot(x='Survived', y='Age', data=train)
+plt.title('Survival Rate by Age')
+plt.show()
+
+# Correlation matrix of the train dataset
+corr_matrix = train.corr()
+plt.figure(figsize=(10, 8))
+sns.heatmap(corr_matrix, annot=True, cmap='coolwarm')
+plt.title('Correlation Matrix (Excluding Embarked)')
+plt.show()
+
+test = pd.merge(test, gender_submission, on='PassengerId')
+
+test['Predicted_Survived'] = (test['Sex_male'] == 0).astype(int)
+
+accuracy = (test['Predicted_Survived'] == test['Survived']).mean()
+print(f'Accuracy of gender-based model: {accuracy * 100:.2f}%')
+
+sns.countplot(x='Survived', hue='Predicted_Survived', data=test)
+plt.title('Actual Survival vs Gender-Based Predictions')
+plt.show()
